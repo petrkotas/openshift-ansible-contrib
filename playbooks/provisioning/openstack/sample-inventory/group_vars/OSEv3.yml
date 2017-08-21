@@ -4,12 +4,6 @@ openshift_deployment_type: origin
 #openshift_release: v3.5
 openshift_master_default_subdomain: "apps.{{ env_id }}.{{ public_dns_domain }}"
 
-#openshift_cluster_node_labels:
-#  app:
-#    region: primary
-#  infra:
-#    region: infra
-
 osm_default_node_selector: 'region=primary'
 
 # NOTE(shadower): the hostname check seems to always fail because the
