@@ -35,6 +35,11 @@
 # Check that openshift_cluster_node_labels is defined for both groups
 # NOTE(kpilatov): if node labels are to be enabled for more groups,
 #                 this check needs to be modified as well
+- name: Set openshift_cluster_node_labels if undefined (should not happen)
+  set_fact:
+    openshift_cluster_node_labels: {}
+  when: openshift_cluster_node_labels is not defined
+
 - name: Set openshift_cluster_node_labels for the infra group if not defined
   set_fact:
     openshift_cluster_node_labels: "{{ openshift_cluster_node_labels | combine({'infra': {} }) }}"
