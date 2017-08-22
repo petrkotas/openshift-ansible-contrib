@@ -44,4 +44,3 @@
   set_fact:
     openshift_cluster_node_labels: "{{ openshift_cluster_node_labels | combine({'app': {} }) }}"
   when: openshift_cluster_node_labels.app is not defined
-
