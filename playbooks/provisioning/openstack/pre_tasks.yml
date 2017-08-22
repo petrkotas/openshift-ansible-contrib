@@ -33,15 +33,15 @@
   - openshift_master_default_subdomain is undefined
 
 # Check that openshift_cluster_node_labels is defined for both groups
-# and if not, set it to an empty directory
 # NOTE(kpilatov): if node labels are to be enabled for more groups,
 #                 this check needs to be modified as well
-- name: Set openshift_cluster_node_labels for the app group if not defined
-  set_fact:
-    openshift_cluster_node_labels.app: {}
-  when: openshift_cluster_node_labels.app is not defined
-
 - name: Set openshift_cluster_node_labels for the infra group if not defined
   set_fact:
-    openshift_cluster_node_labels.infra: {}
+    openshift_cluster_node_labels: "{{ openshift_cluster_node_labels | combine({'infra': {} }) }}"
   when: openshift_cluster_node_labels.infra is not defined
+
+# Additionally, add autoscaling label to app nodes automatically
+- name: Set openshift_cluster_node_labels for the app group if not defined
+  set_fact:
+    openshift_cluster_node_labels: "{{ openshift_cluster_node_labels | combine({'app': { 'autoscaling': 'app' } }) }}"
+  when: openshift_cluster_node_labels.app is not defined
