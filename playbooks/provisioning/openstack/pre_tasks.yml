@@ -40,8 +40,8 @@
     openshift_cluster_node_labels: "{{ openshift_cluster_node_labels | combine({'infra': {} }) }}"
   when: openshift_cluster_node_labels.infra is not defined
 
-# Additionally, add autoscaling label to app nodes automatically
-- name: Set autoscaling label for app nodes
+- name: Set openshift_cluster_node_labels for the app group if not defined
   set_fact:
-     openshift_cluster_node_labels: "{{ openshift_cluster_node_labels | combine({'app': { 'autoscaling': 'app' }}, recursive=True) }}"
+    openshift_cluster_node_labels: "{{ openshift_cluster_node_labels | combine({'app': {} }) }}"
+  when: openshift_cluster_node_labels.app is not defined
 
