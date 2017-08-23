@@ -9,41 +9,6 @@ origin_os = ENV['ORIGIN_OS'] || 'centos'
 rhsm_pool = ENV['RHSM_POOL'] || 'Employee SKU'
 sync_type = ENV['SYNC_TYPE'] || ''
 
-REQUIRED_PLUGINS = %w(vagrant-hostmanager)
-SUGGESTED_PLUGINS = %w(vagrant-sshfs landrush)
-
-# def message(name)
-#   "#{name} plugin is not installed, run `vagrant plugin install #{name}` to install it."
-# end
-
-# SUGGESTED_PLUGINS.each { |plugin| print("note: " + message(plugin) + "\n") unless Vagrant.has_plugin?(plugin) }
-
-# errors = []
-
-# # Validate and collect error message if plugin is not installed
-# REQUIRED_PLUGINS.each { |plugin| errors << message(plugin) unless Vagrant.has_plugin?(plugin) }
-# unless errors.empty?
-#   msg = errors.size > 1 ? "Errors: \n* #{errors.join("\n* ")}" : "Error: #{errors.first}"
-#   fail Vagrant::Errors::VagrantError.new, msg
-# end
-
-# if sync_type == ''
-#   if Vagrant.has_plugin?('vagrant-sshfs')
-#     sync_type = 'sshfs'
-#   else
-#     sync_type = 'rsync'
-#   end
-# end
-
-override_box_url = ''
-if deployment_type == 'openshift-enterprise'
-  box_name = 'rhel/7.2'
-elsif origin_os == 'centos'
-  box_name = 'centos/7'
-else
-  box_name = 'fedora/25-cloud-base'
-end
-
 NETWORK_BASE = '192.168.50'
 INTEGRATION_START_SEGMENT = 20
 
@@ -53,11 +18,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 #    config.cache.scope = :machine
 #  end
 
-  if Vagrant.has_plugin?('landrush')
-    config.landrush.enabled = true
-    config.landrush.tld = 'openshift.test'
-    config.landrush.guest_redirect_dns = false
-  end
+  config.hostmanager.enabled = true
+  config.hostmanager.manage_host = true
+  config.hostmanager.ignore_private_ip = false
 
   config.vm.box = box_name
 
@@ -88,20 +51,24 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "master" do |master|
     master.vm.network :private_network, ip: "#{NETWORK_BASE}.#{INTEGRATION_START_SEGMENT}"
     master.vm.hostname = "master.openshift.test"
-    # master.hostmanager.aliases = %w(master1)
   end
 
   (1..2).each do |i|
     config.vm.define "node-#{i}" do |node|
       node.vm.network :private_network, ip: "#{NETWORK_BASE}.#{INTEGRATION_START_SEGMENT + i}"
       node.vm.hostname = "node-#{i}.openshift.test"
-      # node.hostmanager.aliases = %w(node1)
     end
   end
 
-  # config.vm.define "admin" do |admin|
-  #   admin.vm.network :private_network, ip: "#{NETWORK_BASE}.#{INTEGRATION_START_SEGMENT + 3}"
-  #   admin.vm.hostname = "admin1.example.com"
-  #   # admin.hostmanager.aliases = %w(admin1)
-  # end
+  config.vm.provision "ansible" do |ansible|
+    ansible.groups = {
+      "master" => "master.openshift.test",
+      "nodes" => [
+        "node-1.openshift.test",
+        "node-2.openshift.test"
+      ]
+    }
+    ansible.playbook = "install.yaml"
+  end
+
 end
